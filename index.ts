@@ -5,15 +5,20 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 async function run() {
-  const browser: Browser = await chromium.launch({ headless: false });
+  const browser: Browser = await chromium.launch();
   const context = await browser.newContext();
   const page: Page = await context.newPage();
 
-  await page.goto("https://www.moccamaster.eu/kbg-select-refurbished");
+  await page.goto("https://www.moccamaster.eu/kbg-select-refurbished", {
+  timeout: 60000 // 60 seconds
+});
+  console.log('Page loaded')
   await page.click("text=Allow all cookies");
 
   await page.waitForSelector(".swatch-option");
   const swatchOptions = await page.$$(".swatch-option");
+
+  console.log(`Found ${swatchOptions.length} colours available`)
 
   const webhook = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL || "");
 
@@ -30,7 +35,7 @@ async function run() {
       })
       .isVisible();
 
-    if (isSubscribeButtonVisible) {
+    if (!isSubscribeButtonVisible) {
       const currentUrl = page.url();
 
       const message = {
@@ -68,6 +73,8 @@ async function run() {
         .catch((e) => {
           console.error("Error sending message: ", e);
         });
+    } else {
+      console.log('Colour unavailable')
     }
   }
   await browser.close();
