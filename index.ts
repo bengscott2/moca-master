@@ -18,9 +18,14 @@ async function run() {
   await page.waitForSelector(".swatch-option");
   const swatchOptions = await page.$$(".swatch-option");
 
-  console.log(`Found ${swatchOptions.length} colours available`)
-
   const webhook = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL || "");
+  
+  console.log(`Found ${swatchOptions.length} colours available`)
+  
+  await webhook.send({
+    text: `Found ${swatchOptions.length} colours available`,
+  })
+
 
   for (let swatchOption of swatchOptions) {
     const label = await page.evaluate(
@@ -65,7 +70,7 @@ async function run() {
         ],
       };
 
-      webhook
+      await webhook
         .send(message)
         .then((res) => {
           console.log("Message sent: ", res.text);
